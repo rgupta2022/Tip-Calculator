@@ -1,45 +1,110 @@
 package com.example.tipcalculator;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.view.View;
+import android.util.Log;
+import android.view.Menu;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import java.text.DecimalFormat;
+
+@SuppressWarnings("SpellCheckingInspection")
 public class MainActivity extends AppCompatActivity {
+    private RadioGroup rg;
+    private EditText cost_of_serv;
+    private boolean isRoundUp;
+    private final RadioButton rb = null;
+    private double costofservice;
+    private double tipPercent = 0;
 
-    private EditText costOfService;
-    private Button calcButton;
-    private Switch roundUpSwitch;
-    private RadioGroup radioGroup;
-    private TextView tipAmountText;
-    private double tipAmount;
-    private double tipPercent;
-
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        if(getSupportActionBar() != null){
+            getSupportActionBar().setTitle("Time Tip");
+        }
+        return super.onCreateOptionsMenu(menu);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        costOfService = findViewById(R.id.costOfService);
-        calcButton = findViewById(R.id.calculate);
-        radioGroup = findViewById(R.id.radioGroup);
-        roundUpSwitch = findViewById(R.id.switch1);
-        tipAmountText = findViewById(R.id.tipAmount);
+        //for round up switch
+        @SuppressLint("WrongViewCast") SwitchCompat roundupSwitch = findViewById(R.id.switch1);
+        roundupSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> calc_display_tip());
 
+        //for feedback
+        cost_of_serv = findViewById(R.id.costOfService);
+        rg = findViewById(R.id.radioGroup);
 
-        calcButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String cost = costOfService.getText();
-                int costAmount = Integer.parseInt()
-            }
-        });
+        //for calculate button
+        Button calcBtn = findViewById(R.id.calculate);
+        calcBtn.setOnClickListener(v -> calculateTip());
+    }
 
+    @SuppressLint("NonConstantResourceId")
+    public void calculateTip(){
+        isRoundUp = true;
+        if(cost_of_serv.getText().toString().equals("")){
+            cost_of_serv.setError("Enter cost of service");
+            return;
+        }
+
+        int checkedId = rg.getCheckedRadioButtonId();
+        if(checkedId == -1 ){
+            rb.setError("Select service feedback");
+            return;
+        }
+
+        try{
+            costofservice = Double.parseDouble(cost_of_serv.getText().toString());
+        }catch(Exception e){
+            cost_of_serv.setError("Invalid cost of service");
+            return;
+        }
+
+        switch(checkedId){
+            case R.id.amazing:
+                tipPercent = 0.20;
+                break;
+            case R.id.good:
+                tipPercent = 0.18;
+                break;
+            case R.id.okay:
+                tipPercent = 0.15;
+        }
+
+        calc_display_tip(); //method for calculating and displaying the tip on the screen.
+    }
+
+    @SuppressLint("SetTextI18n")
+    public void calc_display_tip(){
+        boolean round_up_status = ((Switch) findViewById(R.id.switch1)).isChecked();
+        TextView tip_tv = findViewById(R.id.tipsyAmount);
+        tip_tv.setText(getString(R.string.tipAmount));
+        String result = String.valueOf(round_up_status);
+        Log.d(MainActivity.class.getSimpleName(),result);
+
+        double tipAmount;
+        if(round_up_status){
+            tipAmount = Math.round(costofservice * tipPercent);
+            tip_tv.setText(tip_tv.getText() + ": $ "+(int)tipAmount);
+        }else{
+            tipAmount = costofservice * tipPercent;
+            DecimalFormat df = new DecimalFormat("#.##");
+            tip_tv.setText(tip_tv.getText() + ": $ "+df.format(tipAmount));
+        }
+        if(!isRoundUp){
+            tip_tv.setText("Tip Amount");
+        }
     }
 }
